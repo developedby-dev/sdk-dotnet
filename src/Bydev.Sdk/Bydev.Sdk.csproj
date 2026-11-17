@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- netstandard2.1: Unity · .NET Core 3.x / net8.0: WPF · WinForms · MAUI · Avalonia (AOT · 트리밍) -->
+    <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Bydev</RootNamespace>
+    <PackageId>Bydev.Sdk</PackageId>
+    <Version>0.1.0</Version>
+    <Description>bydev 라이선스 API 공식 .NET SDK — 디바이스 로그인 · 토큰 회전 · 세션 리스 · licenseToken 검증 · 업데이트 확인</Description>
+    <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
+    <Authors>한비트 주식회사</Authors>
+    <PackageProjectUrl>https://developedby.dev/sell/docs</PackageProjectUrl>
+    <!-- 공개 거울 저장소(docs/runbooks/sdk-release.md) — 꾸러미는 거울에서 짓는다(커밋이 거울의 것이 되게) -->
+    <RepositoryUrl>https://github.com/developedby-dev/sdk-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>bydev;license;licensing;oauth;device-flow</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- 출시 때 true로(docs/runbooks/sdk-release.md) -->
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Bydev.Sdk.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE-MIT;../../LICENSE-APACHE" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Ed25519 — .NET 10까지 기본 라이브러리에 없다(ADR-0040 ⚠). 순수 관리 코드(네이티브 의존 없음) -->
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
+    <!-- Windows DPAPI 저장소(DpapiCredentialStore) -->
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Text.Json" Version="10.0.13" />
+  </ItemGroup>
+
+</Project>
