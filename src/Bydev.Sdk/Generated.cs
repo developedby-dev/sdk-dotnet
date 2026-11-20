@@ -9,7 +9,7 @@ namespace Bydev;
 /// <summary>이 SDK가 따르는 동작 명세 판.</summary>
 public static class Spec
 {
-    public const string Version = "1.1.0";
+    public const string Version = "1.1.1";
     public const string DeviceCodeGrantType = "urn:ietf:params:oauth:grant-type:device_code";
 }
 
@@ -239,7 +239,7 @@ public static class Routes
 /// <summary>규칙 (sdks/spec/rules.json).</summary>
 public static class Rules
 {
-    public const string SpecVersion = "1.1.0";
+    public const string SpecVersion = "1.1.1";
     public const string Api = "v1";
     public static readonly IReadOnlyList<string> UserAgentLanguages = new[] { "typescript", "dotnet", "swift", "kotlin", "python", "go", "rust", "c" };
     public const string UserAgentPattern = "^bydev-(typescript|dotnet|swift|kotlin|python|go|rust|c)/[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z.-]+)?( .+)?$";

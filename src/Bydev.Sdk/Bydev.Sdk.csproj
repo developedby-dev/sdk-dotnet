@@ -8,7 +8,7 @@
     <RootNamespace>Bydev</RootNamespace>
     <PackageId>Bydev.Sdk</PackageId>
     <Version>0.1.0</Version>
-    <Description>bydev 라이선스 API 공식 .NET SDK — 디바이스 로그인 · 토큰 회전 · 세션 리스 · licenseToken 검증 · 업데이트 확인</Description>
+    <Description>데브 라이선스 API 공식 .NET SDK — 디바이스 로그인 · 토큰 회전 · 세션 리스 · licenseToken 검증 · 업데이트 확인</Description>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <Authors>한비트 주식회사</Authors>
     <PackageProjectUrl>https://developedby.dev/sell/docs</PackageProjectUrl>
@@ -19,8 +19,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <!-- 출시 때 true로(docs/runbooks/sdk-release.md) -->
-    <IsPackable>false</IsPackable>
+    <!-- 게시는 공개 거울의 release.yml이 한다(docs/runbooks/sdk-release.md) — 2026-11-19 이름을 0.x로 먼저 잡으며 true로 -->
+    <IsPackable>true</IsPackable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>$(NoWarn);CS1591</NoWarn>

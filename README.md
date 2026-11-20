@@ -4,13 +4,14 @@
 
 | 지원 | 버전 |
 |---|---|
-| 동작 명세 | 1.1.0 |
+| 동작 명세 | 1.1.1 |
 | API | v1 |
 | 대상 | `net8.0`(WPF, WinForms, MAUI, Avalonia용, 트리밍과 Native AOT 지원), `netstandard2.1`(Unity, .NET Core 3.x) |
 | 운영체제 | Windows, macOS, Linux |
 | 의존성 | `BouncyCastle.Cryptography`(기본 라이브러리에 없는 Ed25519용, 순수 관리 코드), `System.Security.Cryptography.ProtectedData`(DPAPI), `netstandard2.1`에서만 `System.Text.Json` |
 
-NuGet 패키지 `Bydev.Sdk`는 서비스 오픈을 준비하면서 공개합니다. 지금은 이 저장소 안에서만 쓸 수 있습니다(`IsPackable=false`). 네임스페이스는 `Bydev`입니다.
+NuGet 패키지 이름은 `Bydev.Sdk`이고, 네임스페이스는 `Bydev`입니다. 지금 NuGet에 있는 0.x 판은 이름을 먼저 등록하려고 낸 미리보기입니다. 1.0.0은 서비스 오픈과
+함께 내며, 그 전에는 호환되지 않는 변경이 있을 수 있습니다. 판매하는 앱에는 1.0.0 이상을 써 주세요.
 
 ## 빠른 시작
 

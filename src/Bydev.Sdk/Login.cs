@@ -65,13 +65,14 @@ public sealed class LoginAttempt
         else _done.TrySetResult(result!);
     }
 
-    /// <summary>폴링 지터는 위로만(interval보다 이르면 SLOW_DOWN이다).</summary>
-    private void SchedulePoll()
+    /// <summary>폴링 지터는 위로만(interval보다 이르면 SLOW_DOWN이다). 429면 retryAfterSec보다 이르게 묻지 않는다(명세 5절).</summary>
+    private void SchedulePoll(int? retryAfterSec = null)
     {
         long interval;
         lock (_gate) interval = _interval;
         var ports = _api.Ports;
         var delay = Timing.Jittered(ports, interval * 1000.0, Rules.LoginPollJitterMin, Rules.LoginPollJitterMax);
+        if (retryAfterSec is int r && TimeSpan.FromSeconds(r) > delay) delay = TimeSpan.FromSeconds(r);
         if (ports.Clock.NowMs() + (long)delay.TotalMilliseconds > _expiresAtMs)
         {
             Finish(null, BydevException.Sdk(Codes.ExpiredToken, "로그인 코드가 만료됐다 — 처음부터 다시"));
@@ -105,9 +106,13 @@ public sealed class LoginAttempt
         catch (BydevException e)
         {
             if (Settled) return;
-            if (e.Code == Codes.AuthorizationPending || e.IsTransient)
+            if (e.Code == Codes.AuthorizationPending)
             {
                 SchedulePoll();
+            }
+            else if (e.IsTransient)
+            {
+                SchedulePoll(e.Code == Codes.RateLimited || e.HttpStatus == 429 ? e.RetryAfterSec : null);
             }
             else if (e.Code == Codes.SlowDown)
             {
