@@ -24,6 +24,7 @@ sealed class Harness
     private int _http;
     private CredentialRecord? _record;
     private bool _failLoad, _failSave, _failClear;
+    private bool _failFingerprint; // set fingerprint.fail — 지문 출처를 읽지 못한다(하네스 규약 2절)
     private string? _fingerprint;
     private LicenseClient? _client;
     private LoginAttempt? _login;
@@ -79,6 +80,7 @@ sealed class Harness
                         case "storage.failLoad": _failLoad = value; break;
                         case "storage.failSave": _failSave = value; break;
                         case "storage.failClear": _failClear = value; break;
+                        case "fingerprint.fail": _failFingerprint = value; break;
                     }
                     Settle();
                     break;
@@ -223,7 +225,7 @@ sealed class Harness
 
         public string NewUuid() => $"00000000-0000-4000-8000-{++h._uuids:x12}";
 
-        public Task<string?> ReadAsync() => Task.FromResult(h._fingerprint);
+        public Task<string?> ReadAsync() => Task.FromResult(h._failFingerprint ? null : h._fingerprint);
 
         public void Debug(string message) { }
 

@@ -19,6 +19,10 @@ internal interface IOs
     void WriteFile(string path, string content);
     void Remove(string path);
     string NewId();
+    /// <summary>지문 출처를 다시 읽기 전 기다림(명세 10절) — 단위 시험은 기다리지 않게 바꿔 끼운다.</summary>
+    Task DelayAsync(int milliseconds);
+    /// <summary>Windows 레지스트리 API로 읽은 MachineGuid — 읽지 못하면(또는 net8.0이 아니면) null, 그때는 reg 명령으로.</summary>
+    string? RegistryMachineGuid();
 }
 
 /// <summary>실행 중인 운영체제.</summary>
@@ -85,6 +89,31 @@ internal sealed class RealOs : IOs
     }
 
     public string NewId() => Guid.NewGuid().ToString();
+
+    public Task DelayAsync(int milliseconds) => Task.Delay(milliseconds);
+
+    /// <summary>
+    /// 명령을 띄우지 않고 레지스트리 API로 읽는다(명세 10절 — GUI 앱이 띄운 reg.exe는 2026-11-20 Windows에서 5%가 0xC0000142로 실패했다).
+    /// net8.0에만 들어 있다 — netstandard2.1은 reg 명령으로. 32비트 프로세스도 64비트 보기를 읽는다.
+    /// </summary>
+    public string? RegistryMachineGuid()
+    {
+#if NET8_0_OR_GREATER
+        if (!OperatingSystem.IsWindows()) return null;
+        try
+        {
+            using var root = Microsoft.Win32.RegistryKey.OpenBaseKey(Microsoft.Win32.RegistryHive.LocalMachine, Microsoft.Win32.RegistryView.Registry64);
+            using var key = root.OpenSubKey(@"SOFTWARE\Microsoft\Cryptography");
+            return key?.GetValue("MachineGuid") as string;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            return null;
+        }
+#else
+        return null;
+#endif
+    }
 }
 
 internal sealed class ExitCodeException : IOException
@@ -218,16 +247,21 @@ internal sealed class OsFingerprint : IFingerprintSource
         _os = os;
     }
 
+    /// <summary>실패하거나 빈 값이면 설치 ID로 물러나기 전에 다시 읽는다(명세 10절) — 일시적인 실패 하나로 같은 PC가 다른 기기가 되지 않게.</summary>
     public async Task<string?> ReadAsync()
     {
-        try
+        for (var attempt = 0; attempt < Math.Max(Rules.FingerprintSourceReadAttempts, 1); attempt++)
         {
-            var value = (await MachineIdAsync().ConfigureAwait(false))?.Trim();
-            if (!string.IsNullOrEmpty(value)) return value;
-        }
-        catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
-        {
-            // 아래 설치 ID로
+            if (attempt > 0) await _os.DelayAsync(Rules.FingerprintSourceReadRetryDelayMs).ConfigureAwait(false);
+            try
+            {
+                var value = (await MachineIdAsync().ConfigureAwait(false))?.Trim();
+                if (!string.IsNullOrEmpty(value)) return value;
+            }
+            catch (Exception e) when (e is IOException or System.ComponentModel.Win32Exception or InvalidOperationException)
+            {
+                // 다시 읽거나 아래 설치 ID로
+            }
         }
         if (_installIdFile is null) return null;
         var existing = _os.ReadFile(_installIdFile)?.Trim();
@@ -243,6 +277,8 @@ internal sealed class OsFingerprint : IFingerprintSource
         {
             case "windows":
                 {
+                    var api = _os.RegistryMachineGuid()?.Trim(); // 레지스트리 API가 먼저 — 프로세스를 띄우지 않는다
+                    if (!string.IsNullOrEmpty(api)) return api;
                     var output = await _os.ExecAsync("reg", new[] { "query", @"HKLM\SOFTWARE\Microsoft\Cryptography", "/v", "MachineGuid" }).ConfigureAwait(false);
                     var m = MachineGuid.Match(output);
                     return m.Success ? m.Groups[1].Value : null;

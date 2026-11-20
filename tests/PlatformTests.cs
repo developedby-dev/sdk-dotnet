@@ -13,10 +13,19 @@ internal sealed class FakeOs(string name) : IOs
 
     public string Name => name;
 
+    public readonly List<int> Slept = new();
+    public string? Registry;
+
     public Task<string> ExecAsync(string program, string[] args, string? stdin = null)
     {
         Calls.Add((program, args, stdin));
-        if (!Answers.TryGetValue($"{program} {args[0]}", out var answer)) Answers.TryGetValue(program, out answer);
+        var key = Answers.ContainsKey($"{program} {args[0]}") ? $"{program} {args[0]}" : program;
+        Answers.TryGetValue(key, out var answer);
+        if (answer is object[] sequence && sequence.Length > 0) // 차례로 — 마지막 값을 되풀이
+        {
+            if (sequence.Length > 1) Answers[key] = sequence[1..];
+            answer = sequence[0];
+        }
         return answer switch
         {
             Exception e => Task.FromException<string>(e),
@@ -32,6 +41,14 @@ internal sealed class FakeOs(string name) : IOs
     public void Remove(string path) => Files.Remove(path);
 
     public string NewId() => "00000000-0000-4000-8000-00000000abcd";
+
+    public Task DelayAsync(int milliseconds)
+    {
+        Slept.Add(milliseconds);
+        return Task.CompletedTask;
+    }
+
+    public string? RegistryMachineGuid() => Registry;
 }
 
 internal sealed class RecordingLogger : IBydevLogger
@@ -63,6 +80,32 @@ public class PlatformTests
         Assert.Equal("A1B2C3D4-0000-1111-2222-333344445555", await new OsFingerprint(null, mac).ReadAsync());
         var linux = new FakeOs("linux") { Files = { ["/var/lib/dbus/machine-id"] = "0123456789abcdef0123456789abcdef\n" } };
         Assert.Equal("0123456789abcdef0123456789abcdef", await new OsFingerprint(null, linux).ReadAsync());
+    }
+
+    /// <summary>1.2.0 — 2026-11-20 Windows에서 MachineGuid 읽기가 한 번 실패해 설치 ID로 등록됐다(같은 PC가 다른 기기).</summary>
+    [Fact]
+    public async Task FingerprintRetriesBeforeInstallId()
+    {
+        var guid = "    MachineGuid    REG_SZ    3f1e9a2b-1111-2222-3333-444455556666\r\n";
+        var win = new FakeOs("windows") { Answers = { ["reg"] = new object[] { new IOException("잠시 실패"), "", guid } } };
+        Assert.Equal("3f1e9a2b-1111-2222-3333-444455556666", await new OsFingerprint("/app/install-id", win).ReadAsync());
+        Assert.Empty(win.Files);
+        Assert.Equal(3, win.Calls.Count);
+        Assert.Equal(new[] { Rules.FingerprintSourceReadRetryDelayMs, Rules.FingerprintSourceReadRetryDelayMs }, win.Slept);
+        var failing = new FakeOs("windows") { Answers = { ["reg"] = new IOException("계속 실패") } };
+        Assert.Equal("00000000-0000-4000-8000-00000000abcd", await new OsFingerprint("/app/install-id", failing).ReadAsync());
+        Assert.Equal(Rules.FingerprintSourceReadAttempts, failing.Calls.Count);
+    }
+
+    /// <summary>Windows는 레지스트리 API로 먼저 읽는다 — 명령을 띄우지 않는다. 없으면 reg 명령으로.</summary>
+    [Fact]
+    public async Task FingerprintWindowsRegistryApiFirst()
+    {
+        var os = new FakeOs("windows") { Answers = { ["reg"] = "    MachineGuid    REG_SZ    from-reg-command\r\n" }, Registry = "from-registry-api" };
+        Assert.Equal("from-registry-api", await new OsFingerprint(null, os).ReadAsync());
+        Assert.Empty(os.Calls);
+        os.Registry = null;
+        Assert.Equal("from-reg-command", await new OsFingerprint(null, os).ReadAsync());
     }
 
     [Fact]

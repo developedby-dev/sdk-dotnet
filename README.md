@@ -4,7 +4,7 @@
 
 | 지원 | 버전 |
 |---|---|
-| 동작 명세 | 1.1.1 |
+| 동작 명세 | 1.2.0 |
 | API | v1 |
 | 대상 | `net8.0`(WPF, WinForms, MAUI, Avalonia용, 트리밍과 Native AOT 지원), `netstandard2.1`(Unity, .NET Core 3.x) |
 | 운영체제 | Windows, macOS, Linux |
