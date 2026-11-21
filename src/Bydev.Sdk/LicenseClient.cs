@@ -28,7 +28,7 @@ public sealed class LicenseClientOptions
 public sealed class LicenseClient
 {
     /// <summary>User-Agent(<c>bydev-dotnet/&lt;판&gt;</c>)에 실린다.</summary>
-    public const string SdkVersion = "0.1.0";
+    public const string SdkVersion = "1.0.0";
 
     internal const string UserAgent = "bydev-dotnet/" + SdkVersion;
 

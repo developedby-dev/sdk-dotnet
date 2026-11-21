@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>Bydev</RootNamespace>
     <PackageId>Bydev.Sdk</PackageId>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
     <Description>데브 라이선스 API 공식 .NET SDK — 디바이스 로그인 · 토큰 회전 · 세션 리스 · licenseToken 검증 · 업데이트 확인</Description>
     <PackageLicenseExpression>MIT OR Apache-2.0</PackageLicenseExpression>
     <Authors>한비트 주식회사</Authors>
